@@ -12,6 +12,8 @@ class OffAxisOxideSystem():
 		self.master.protocol('WM_DELETE_WINDOW', self.quit)
 		
 		self.mfcArgon = MFC('COM12', '8A5A0F462A', 'Ar')
+		#self.mfcOxygen = MFC()
+		#self.mfcNitrogen = MFC
 		#self.threadArgon = perpetualTimer(3, self.readArgon)
 			
 		#self.realflowArgon = self.mfcArgon.readPrimaryValue()
