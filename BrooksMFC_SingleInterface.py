@@ -97,6 +97,7 @@ class MFC:
 		for i in range(0, 100, 1):
 			time.sleep(1.0/1000.0)
 			read+=self.strToHex(self.serialport.read())
+			print "got", read
 			if(pattern.match(read)):
 				[results] = pattern.findall(read)
 				if(len(results) == 8 and len(results[6]) > 1 and len(results[6]) % 2 == 0): #Check that results has 8 entries, received data is > 1 and has even characters
@@ -115,7 +116,7 @@ class MFC:
 	# Generic communication with MFC, takes arguments in hex string format, ie "Hello World" would be 48656C6C6F20576F726C64, returns ASCII formatted string
 	def communicateMFC(self, cmd, bytecount, data):
 		#Debugging purposes
-		debug = False
+		debug = True
 
 		#General information
 		preamble="FFFFFFFF"
@@ -140,7 +141,7 @@ class MFC:
 
 			#Read response
 			response=self.readMFC(retDelim, address, cmd)
-			if debug: print "Data received:", response, len(response)/2, "characters"
+			if debug: print "Data received:", `response`, len(response)/2, "characters"
 			return self.hexToStr(response)
 		else:
 			return "FAULT"
@@ -309,7 +310,7 @@ class MyFrame(wx.Frame):
         wx.Frame.__init__(self, parent, id, title, size=(600,600))
 
 	# Test MFC
-	self.mfc1 = MFC('COM4', 'Ar')
+	self.mfc1 = MFC('COM12', 'Ar')
 
 	# Main panel
 	topPanel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
