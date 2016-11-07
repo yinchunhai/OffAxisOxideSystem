@@ -1,0 +1,26 @@
+Brooks Mass Flow Controller
+1. Com Port settings
+	The MFC uses Brainboxes RS-422/485 Serial port. It is important to set the correct "duplex mode".
+	--> Port settings 
+	--> Advanced 
+	--> RS-422/485 Settings 
+	--> Duplex mode: RS-485 Half-Duplex Autogating Mode (This is important, otherwise the MFC would not able to send data to the computer!)
+	
+2. Determine the address of MFC
+	The address of MFC is 10 digits Hexadecimal number which contains 3 parts:
+	Part1: 8A (8 for primary master, A=10 decimal for Brooks manufacturer id)
+	Part2: 5A (device type)
+	Part3: Series Number(SN) of each MFC
+		Ar SN: 3F2501001002
+		O2 SN: 3F2501002001
+		N2 SN:  F4129001001
+		
+		Pickup the last 8 digits of each SN and convert it to Hex number.
+		Ar SN: 01001002 --> F462A
+		O2 SN: 01002001 --> F4A11
+		N2 SN: 29001001	--> 1BA8529	
+		
+		The address for each MFC is:
+		Ar 8A5A0F462A
+		O2 8A5A0F4A11
+		N2 8A5ABA8529	

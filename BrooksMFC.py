@@ -82,20 +82,21 @@ class MFC:
 									dsrdtr=False, 
 									interCharTimeout=None)
 		self.serialport.setDTR(False)
+		print self.gas, "Serial port is open!"
 
 	# Close serial port
 	def closeSerialPort(self):
 		self.serialport.close()
+		print self.gas, "Serial port is closed!"
 
 	# Read response until the checksum is found and datalength matches
 	def readMFC(self, retDelim, address, cmd):
 		i=0
 		read=""
 		pattern = re.compile('^(ff){2,6}('+retDelim+')('+address+')('+cmd+')([0-9A-Fa-f]{2})([0-9A-Fa-f]{4})([0-9A-Fa-f]*)([0-9A-Fa-f]{2})$', re.IGNORECASE)
-			
 		for i in range(0, 100, 1):
 			time.sleep(1.0/1000.0)
-			read+=self.strToHex(self.serialport.read())
+			read+=self.strToHex(self.serialport.read(128))
 			if(pattern.match(read)):
 				[results] = pattern.findall(read)
 				if(len(results) == 8 and len(results[6]) > 1 and len(results[6]) % 2 == 0): #Check that results has 8 entries, received data is > 1 and has even characters
@@ -115,7 +116,7 @@ class MFC:
 	def communicateMFC(self, cmd, bytecount, data):
 		#Debugging purposes
 		debug = False
-
+		
 		#General information
 		preamble = "FFFFFFFF"
 		delimiter= "82" #master to slave
@@ -125,8 +126,6 @@ class MFC:
 		if debug: print "Sending (preamble & checksum not included):", delimiter, address, cmd, bytecount, data
 		middle = self.hexToStr(delimiter+address+cmd+bytecount+data)
 		csum=self.createChecksum(middle)
-		
-		print 'middle is ', middle, 'csum is', csum
 		
 		#Is the serial port open?
 		if(self.serialport.isOpen() == False): self.openSerialPort()
@@ -141,7 +140,6 @@ class MFC:
 
 			#Read response
 			response=self.readMFC(retDelim, address, cmd)
-			print response
 			if debug: print "Data received:", response, len(response)/2, "characters"
 			return self.hexToStr(response)
 		else:
