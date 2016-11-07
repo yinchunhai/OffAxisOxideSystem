@@ -45,6 +45,14 @@ class ButterFlyValve:
 		if response == 'O:':
 			print "ButterFly Valve is open!"
 			
+	def holdValve(self):
+		self.serialport.write(bytes('H:\r\n'))
+		time.sleep(1.0/1000.0)
+		response = self.serialport.read(256)
+		if response == 'H:':
+			print "ButterFly Valve is hold!"	
+	
+			
 oxide = ButterFlyValve('COM1')
 oxide.closeValve()
 time.sleep(5)
