@@ -2,14 +2,31 @@ from Tkinter import *
 import tkMessageBox
 import serial
 import thread
+import time
 
 from BrooksMFC import MFC
 from perpetualTimer import perpetualTimer
+from pyduino import *
+
+PIN10 = 10
+PIN11 = 11
+PIN12 = 12
+target1 = 'SmNiO3'
+target2 = 'LaAlO3'
+target3 = 'SrVO3'
+target4 = 'Al2O3'
 
 class OffAxisOxideSystem():
 	def __init__(self, master):
 		self.master = master
 		self.master.protocol('WM_DELETE_WINDOW', self.quit)
+		
+		self.switchBox = Arduino()
+		time.sleep(3)
+		self.switchBox.set_pin_mode(PIN10,'O')
+		self.switchBox.set_pin_mode(PIN11,'O')
+		self.switchBox.set_pin_mode(PIN12,'O')
+		time.sleep(1)
 		
 		self.mfcArgon = MFC('COM12', '8A5A0F462A', 'Ar')
 		self.threadArgon = perpetualTimer(3, self.readArgon, 'Ar')
@@ -17,6 +34,19 @@ class OffAxisOxideSystem():
 		self.threadOxygen = perpetualTimer(3, self.readOxygen, 'O2')
 		self.mfcNitrogen = MFC('COM11', '8A5ABA8529', 'N2')
 		self.threadNitrogen = perpetualTimer(3, self.readNitrogen, 'N2')
+
+		#SwitchBox Frame
+		self.switchBoxFrame = LabelFrame(master, text='Switch Box', padx=5, pady=5)
+		self.switchBoxFrame.grid(row=0, column=0, sticky=W, padx=5, pady=5)
+		self.targetOneButton = Button(self.switchBoxFrame, text='Target 1\n\n'+target1, command=self.connectTargetOne)
+		self.targetOneButton.grid(row=0, column=0, sticky=W, padx=5, pady=5)
+		self.targetTwoButton = Button(self.switchBoxFrame, text='Target 2\n\n'+target2, command=self.connectTargetTwo)
+		self.targetTwoButton.grid(row=0, column=1, sticky=W, padx=5, pady=5)
+		self.targetThreeButton = Button(self.switchBoxFrame, text='Target 3\n\n'+target3, command=self.connectTargetThree)
+		self.targetThreeButton.grid(row=0, column=2, sticky=W, padx=5, pady=5)
+		self.targetFourButton = Button(self.switchBoxFrame, text='Target 4\n\n'+target4, command=self.connectTargetFour)
+		self.targetFourButton.grid(row=0, column=3, sticky=W, padx=5, pady=5)
+
 		
 		#Process Gas Frame
 		self.processGasFrame = LabelFrame(master, text='Process Gas', padx=5, pady=5)
@@ -28,7 +58,6 @@ class OffAxisOxideSystem():
 		self.setflowLabel.grid(row=0, column=5, sticky=W, padx=5, pady=5)
 		self.realflowLabel = Label(self.processGasFrame, text='Real Flow (ml/min)')
 		self.realflowLabel.grid(row=0, column=6, sticky=W, padx=5, pady=5)
-		
 		#row 1 Argon widgets
 		self.checkButtonArgon = Checkbutton(self.processGasFrame, text='Argon') 
 		self.checkButtonArgon.grid(row=1, column=0, sticky=W, padx=5, pady=5)
@@ -125,10 +154,12 @@ class OffAxisOxideSystem():
 		self.closeNitrogenButton = Button(self.processGasFrame, text='Close', command=self.closeNitrogen)
 		self.closeNitrogenButton.grid(row=3, column=9, sticky=W, padx=5, pady=5)
 		self.closeNitrogenButton.configure(state='disabled')
+
 	#Argon Functions
 	def enableArgon(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to enable Argon?')
 		if result == True:
+			self.enableArgonButton.configure(background='green')
 			self.checkButtonArgon.configure(state='normal')
 			self.setpointArgonEntry.configure(state='normal')
 			self.setpointArgonButton.configure(state='normal')
@@ -138,10 +169,10 @@ class OffAxisOxideSystem():
 			self.threadArgon.start()
 		else:
 			pass
-	
 	def disableArgon(self):
-		result = tkMessageBox.askyesno('Question', 'Do you want to enable Argon?')
+		result = tkMessageBox.askyesno('Question', 'Do you want to disable Argon?')
 		if result == True:
+			self.enableArgonButton.configure(background='grey')
 			self.checkButtonArgon.configure(state='disabled')
 			self.setpointArgonEntry.configure(state='disabled')
 			self.setpointArgonButton.configure(state='disabled')
@@ -150,26 +181,21 @@ class OffAxisOxideSystem():
 			self.closeArgonButton.configure(state='disabled')
 		else:
 			pass
-		
 	def setArgon(self):
 		self.setpointArgon = float(self.setpointArgonEntry.get())
 		self.setflowArgonVar.set(self.setpointArgon*2)
-		
 	def offArgon(self):
 		self.mfcArgon.setValveOverrideOff()
 		self.setpointArgon = float(self.setpointArgonEntry.get())
 		self.mfcArgon.setFlowSetPointPercentage(self.setpointArgon)
-		
 	def openArgon(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to open 100%?')
 		if result == True:
 			self.mfcArgon.setValveOverrideOpen()
 		else:
 			pass
-
 	def closeArgon(self):
 		self.mfcArgon.setValveOverrideClose()
-		
 	def readArgon(self):
 		self.realflowArgon = self.mfcArgon.readPrimaryValue()
 		self.realflowArgonVar.set(self.realflowArgon)
@@ -179,6 +205,7 @@ class OffAxisOxideSystem():
 	def enableOxygen(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to enable Oxygen?')
 		if result == True:
+			self.enableOxygenButton.configure(background='green')
 			self.checkButtonOxygen.configure(state='normal')
 			self.setpointOxygenEntry.configure(state='normal')
 			self.setpointOxygenButton.configure(state='normal')
@@ -188,10 +215,10 @@ class OffAxisOxideSystem():
 			self.threadOxygen.start()
 		else:
 			pass
-	
 	def disableOxygen(self):
-		result = tkMessageBox.askyesno('Question', 'Do you want to enable Oxygen?')
+		result = tkMessageBox.askyesno('Question', 'Do you want to disable Oxygen?')
 		if result == True:
+			self.enableOxygenButton.configure(background='grey')
 			self.checkButtonOxygen.configure(state='disabled')
 			self.setpointOxygenEntry.configure(state='disabled')
 			self.setpointOxygenButton.configure(state='disabled')
@@ -200,26 +227,21 @@ class OffAxisOxideSystem():
 			self.closeOxygenButton.configure(state='disabled')
 		else:
 			pass
-		
 	def setOxygen(self):
 		self.setpointOxygen = float(self.setpointOxygenEntry.get())
 		self.setflowOxygenVar.set(self.setpointOxygen*2)
-		
 	def offOxygen(self):
 		self.mfcOxygen.setValveOverrideOff()
 		self.setpointOxygen = float(self.setpointOxygenEntry.get())
 		self.mfcOxygen.setFlowSetPointPercentage(self.setpointOxygen)
-		
 	def openOxygen(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to open 100%?')
 		if result == True:
 			self.mfcOxygen.setValveOverrideOpen()
 		else:
 			pass
-
 	def closeOxygen(self):
 		self.mfcOxygen.setValveOverrideClose()
-		
 	def readOxygen(self):
 		self.realflowOxygen = self.mfcOxygen.readPrimaryValue()
 		self.realflowOxygenVar.set(self.realflowOxygen)
@@ -229,6 +251,7 @@ class OffAxisOxideSystem():
 	def enableNitrogen(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to enable Nitrogen?')
 		if result == True:
+			self.enableNitrogenButton.configure(background='green')
 			self.checkButtonNitrogen.configure(state='normal')
 			self.setpointNitrogenEntry.configure(state='normal')
 			self.setpointNitrogenButton.configure(state='normal')
@@ -238,10 +261,10 @@ class OffAxisOxideSystem():
 			self.threadNitrogen.start()
 		else:
 			pass
-	
 	def disableNitrogen(self):
-		result = tkMessageBox.askyesno('Question', 'Do you want to enable Nitrogen?')
+		result = tkMessageBox.askyesno('Question', 'Do you want to disable Nitrogen?')
 		if result == True:
+			self.enableNitrogenButton.configure(background='grey')
 			self.checkButtonNitrogen.configure(state='disabled')
 			self.setpointNitrogenEntry.configure(state='disabled')
 			self.setpointNitrogenButton.configure(state='disabled')
@@ -250,38 +273,85 @@ class OffAxisOxideSystem():
 			self.closeNitrogenButton.configure(state='disabled')
 		else:
 			pass
-		
 	def setNitrogen(self):
 		self.setpointNitrogen = float(self.setpointNitrogenEntry.get())
 		self.setflowNitrogenVar.set(self.setpointNitrogen*2)
-		
 	def offNitrogen(self):
 		self.mfcNitrogen.setValveOverrideOff()
 		self.setpointNitrogen = float(self.setpointNitrogenEntry.get())
 		self.mfcNitrogen.setFlowSetPointPercentage(self.setpointNitrogen)
-		
 	def openNitrogen(self):
 		result = tkMessageBox.askyesno('Question', 'Do you want to open 100%?')
 		if result == True:
 			self.mfcNitrogen.setValveOverrideOpen()
 		else:
 			pass
-
 	def closeNitrogen(self):
 		self.mfcNitrogen.setValveOverrideClose()
-		
 	def readNitrogen(self):
 		self.realflowNitrogen = self.mfcNitrogen.readPrimaryValue()
 		self.realflowNitrogenVar.set(self.realflowNitrogen)
 		print "Nitrogen flow is:", self.realflowNitrogen
-	
+
+	#SwitchBox Functions
+	def connectTargetOne(self):
+		result = tkMessageBox.askquestion('Quiry', 'Do u want to switch to Target 1?')
+		if result == 'yes':
+			self.switchBox.digital_write(PIN10,0)
+			self.switchBox.digital_write(PIN11,0)
+			self.switchBox.digital_write(PIN12,0)
+			self.targetOneButton.configure(background='green')
+			self.targetTwoButton.configure(background='grey')
+			self.targetThreeButton.configure(background='grey')
+			self.targetFourButton.configure(background='grey')
+		else:
+			pass
+	def connectTargetTwo(self):
+		result = tkMessageBox.askquestion('Quiry', 'Do u want to switch to Target 2?')
+		if result == 'yes':
+			self.switchBox.digital_write(PIN10,1)
+			self.switchBox.digital_write(PIN11,0)
+			self.switchBox.digital_write(PIN12,0)
+			self.targetOneButton.configure(background='grey')
+			self.targetTwoButton.configure(background='green')
+			self.targetThreeButton.configure(background='grey')
+			self.targetFourButton.configure(background='grey')
+		else:
+			pass
+	def connectTargetThree(self):
+		result = tkMessageBox.askquestion('Quiry', 'Do u want to switch to Target 3?')
+		if result == 'yes':
+			self.switchBox.digital_write(PIN10,1)
+			self.switchBox.digital_write(PIN11,1)
+			self.switchBox.digital_write(PIN12,0)
+			self.targetOneButton.configure(background='grey')
+			self.targetTwoButton.configure(background='grey')
+			self.targetThreeButton.configure(background='green')
+			self.targetFourButton.configure(background='grey')
+		else:
+			pass
+	def connectTargetFour(self):
+		result = tkMessageBox.askquestion('Quiry', 'Do u want to switch to Target 4?')
+		if result == 'yes':
+			self.switchBox.digital_write(PIN10,1)
+			self.switchBox.digital_write(PIN11,1)
+			self.switchBox.digital_write(PIN12,1)
+			self.targetOneButton.configure(background='grey')
+			self.targetTwoButton.configure(background='grey')
+			self.targetThreeButton.configure(background='grey')
+			self.targetFourButton.configure(background='green')
+		else:
+			pass
+
 	def quit(self):
 		if tkMessageBox.askokcancel("Exit", "Do you want to exit?"):
 			self.master.destroy()
 			self.threadArgon.cancel()
 			self.mfcArgon.closeSerialPort()
-			
-			
+			self.threadOxygen.cancel()
+			self.mfcOxygen.closeSerialPort()
+			self.threadNitrogen.cancel()
+			self.mfcNitrogen.closeSerialPort()
 
 root = Tk()
 
